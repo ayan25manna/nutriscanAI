@@ -1,0 +1,130 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; }
+  html, body { 
+    min-height: 100%;
+    overflow-x: hidden;
+    font-family: 'Inter', sans-serif;
+  }
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(5,150,105,0.3); border-radius: 99px; }
+}
+
+@layer utilities {
+  .font-head { font-family: 'Poppins', sans-serif; }
+  .font-mono-num { font-family: 'Roboto Mono', monospace; }
+
+  /* Glassmorphism */
+  .glass {
+    background: rgba(255,255,255,0.10);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.22);
+  }
+  .glass-green {
+    background: rgba(5,150,105,0.15);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(5,150,105,0.35);
+  }
+
+  /* Hero gradient text */
+  .text-gradient {
+    background: linear-gradient(90deg, #34d399, #059669);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Card shadow */
+  .card-shadow { box-shadow: 0 4px 24px rgba(5,150,105,0.10); }
+  .card-shadow-lg { box-shadow: 0 8px 32px rgba(0,0,0,0.08); }
+
+  /* Neumorphic for rings */
+  .neumorphic {
+    box-shadow: 6px 6px 12px rgba(5,150,105,0.08), -6px -6px 12px rgba(255,255,255,0.9);
+  }
+
+  /* Scan viewfinder corners */
+  .vf-corner-tl { border-top: 3px solid #34d399; border-left: 3px solid #34d399; border-radius: 4px 0 0 0; }
+  .vf-corner-tr { border-top: 3px solid #34d399; border-right: 3px solid #34d399; border-radius: 0 4px 0 0; }
+  .vf-corner-bl { border-bottom: 3px solid #34d399; border-left: 3px solid #34d399; border-radius: 0 0 0 4px; }
+  .vf-corner-br { border-bottom: 3px solid #34d399; border-right: 3px solid #34d399; border-radius: 0 0 4px 0; }
+
+  /* Ring pulse animation */
+  .ring-pulse { animation: ringGlow 2.3s ease-in-out infinite; }
+
+  /* Gradient buttons */
+  .btn-em {
+    background: linear-gradient(135deg, #059669, #10b981);
+    box-shadow: 0 6px 26px rgba(5,150,105,0.4);
+  }
+  .btn-em:hover { box-shadow: 0 10px 36px rgba(5,150,105,0.55); }
+
+  /* Hide scrollbar but keep function */
+  .no-scrollbar { scrollbar-width: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+}
+
+/* 3D flip card */
+.flip-card { perspective: 700px; }
+.flip-card-inner {
+  transition: transform 0.6s cubic-bezier(0.4,0,0.2,1);
+  transform-style: preserve-3d;
+  position: relative;
+}
+.flip-card-inner.flipped { transform: rotateY(180deg); }
+.flip-card-front,
+.flip-card-back {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 14px;
+}
+.flip-card-back {
+  transform: rotateY(180deg);
+  position: absolute;
+  inset: 0;
+}
+
+/* Scanline animation */
+@keyframes scanlineMove {
+  0%   { top: 14%; opacity: 0; }
+  8%   { opacity: 1; }
+  92%  { opacity: 1; }
+  100% { top: 83%; opacity: 0; }
+}
+.scanline-animate {
+  animation: scanlineMove 2.5s ease-in-out infinite;
+  position: absolute;
+  left: 11px;
+  right: 11px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(52,211,153,0.95), transparent);
+}
+
+/* Plus burst */
+@keyframes plusBurst {
+  0%   { opacity: 1; transform: scale(0.4) translateY(0); }
+  55%  { opacity: 1; transform: scale(1.7) translateY(-28px); }
+  100% { opacity: 0; transform: scale(2.4) translateY(-60px); }
+}
+.plus-burst {
+  position: fixed;
+  pointer-events: none;
+  font-size: 34px;
+  font-weight: 800;
+  color: #10b981;
+  z-index: 9999;
+  animation: plusBurst 0.8s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+
+/* Toast */
+@keyframes toastSlideIn {
+  from { opacity: 0; transform: translateY(14px) scale(0.9); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.toast-item { animation: toastSlideIn 0.35s cubic-bezier(0.34,1.56,0.64,1); }
