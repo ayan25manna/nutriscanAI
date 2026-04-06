@@ -1,36 +1,25 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { generateMealPlan } from '../services/aiService.js'
+import { generateMealRecommendations } from '../services/edamamService.js'
 import { useApp } from '../context/AppContext.jsx'
 
-const MEAL_COLORS = {
-  'Breakfast':     { bg:'#fef3c7', dot:'#f59e0b' },
-  'Morning Snack': { bg:'#d1fae5', dot:'#059669' },
-  'Lunch':         { bg:'#dbeafe', dot:'#3b82f6' },
-  'Evening Snack': { bg:'#ede9fe', dot:'#8b5cf6' },
-  'Dinner':        { bg:'#fce7f3', dot:'#ec4899' },
+const MEAL_COLORS={
+  'Breakfast':     {bg:'#fef3c7',dot:'#f59e0b'},
+  'Lunch':         {bg:'#dbeafe',dot:'#3b82f6'},
+  'Afternoon snack':{bg:'#ede9fe',dot:'#8b5cf6'},
+  'Dinner':        {bg:'#d1fae5',dot:'#059669'},
+  'Evening snack': {bg:'#fce7f3',dot:'#ec4899'},
 }
 
 export default function MealPlanner() {
-  const { caloriesEaten, GOAL } = useApp()
-  const [plan, setPlan]     = useState(null)
-  const [loading, setLoad]  = useState(false)
-  const [error, setError]   = useState(null)
-  const remaining = Math.max(0, GOAL - caloriesEaten)
+  const {caloriesEaten,GOAL,addToast}=useApp()
+  const [plan,setPlan]=useState(null)
+  const remaining=Math.max(0,GOAL-caloriesEaten)
 
-  const generate = async () => {
-    setLoad(true); setError(null)
-    try {
-      const result = await generateMealPlan(
-        { profession:'Software Engineer', city:'Jamshedpur, India', goal:'Maintain weight', diet:'No restriction' },
-        remaining
-      )
-      setPlan(result)
-    } catch {
-      setError('Could not generate meal plan. Check AI connection.')
-    } finally {
-      setLoad(false)
-    }
+  const generate=()=>{
+    const result=generateMealRecommendations(remaining,{profession:'Software Engineer',city:'Jamshedpur',goal:'Maintain weight'})
+    setPlan(result)
+    addToast('Meal plan generated! 🍽️','ok')
   }
 
   return (
@@ -38,94 +27,61 @@ export default function MealPlanner() {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="font-head font-bold text-gray-700 text-sm flex items-center gap-2">
-            🍽️ Smart Meal Planner
-            <span className="text-[10px] bg-em text-white font-bold px-2 py-0.5 rounded-full">AI</span>
+            🍽️ Smart Meal Suggestions
+            <span className="text-[10px] bg-em-light text-em-dark font-bold px-2 py-0.5 rounded-full font-head">FREE</span>
           </h3>
           <p className="text-[11px] text-gray-400 mt-0.5">
-            Claude plans your remaining meals for{' '}
-            <span className="font-mono-num font-semibold text-em-dark">{remaining.toLocaleString()} kcal</span>
+            Personalized for your remaining <span className="font-mono-num font-semibold text-em-dark">{remaining.toLocaleString()} kcal</span>
           </p>
         </div>
-        <motion.button
-          whileHover={{ y:-1 }}
-          whileTap={{ scale:0.96 }}
-          onClick={generate}
-          disabled={loading}
-          className="btn-em px-4 py-2 rounded-xl text-white text-xs font-bold font-head flex items-center gap-1.5 disabled:opacity-60"
-        >
-          {loading
-            ? <motion.span animate={{ rotate:360 }} transition={{ duration:1, repeat:Infinity, ease:'linear' }}>⚙️</motion.span>
-            : '✨'} Plan my day
+        <motion.button whileHover={{y:-1}} whileTap={{scale:0.96}} onClick={generate}
+          className="btn-em px-4 py-2 rounded-xl text-white text-xs font-bold font-head flex items-center gap-1.5">
+          ✨ Suggest meals
         </motion.button>
       </div>
 
-      <AnimatePresence mode="wait">
-        {loading && (
-          <motion.div key="load" initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
-            className="py-8 flex flex-col items-center gap-3">
-            <div className="flex gap-2">
-              {['🥗','🍚','🫘','🥑'].map((e,i) => (
-                <motion.span key={e} className="text-2xl"
-                  animate={{ y:[0,-8,0] }}
-                  transition={{ duration:0.8, delay:i*0.15, repeat:Infinity }}>
-                  {e}
-                </motion.span>
-              ))}
+      <AnimatePresence>
+        {plan&&(
+          <motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0}}>
+            <div className="bg-em-xl rounded-xl px-4 py-2.5 mb-3 border border-em/10 flex items-center justify-between">
+              <div>
+                <p className="font-head font-bold text-em-dark text-xs">{plan.mealTime} suggestions</p>
+                <p className="text-[11px] text-em/70 mt-0.5">{remaining} kcal remaining today</p>
+              </div>
+              <span className="text-2xl">{plan.mealTime==='Breakfast'?'🌅':plan.mealTime==='Lunch'?'☀️':plan.mealTime==='Dinner'?'🌙':'⚡'}</span>
             </div>
-            <p className="font-head font-semibold text-gray-500 text-sm">Building your personalized plan...</p>
-          </motion.div>
-        )}
 
-        {error && (
-          <motion.div key="err" initial={{ opacity:0 }} animate={{ opacity:1 }}
-            className="bg-coral-light text-coral-dark rounded-xl p-3 text-xs text-center">{error}</motion.div>
-        )}
-
-        {plan && !loading && (
-          <motion.div key="plan" initial={{ opacity:0 }} animate={{ opacity:1 }}>
             <div className="flex flex-col gap-2.5 mb-3">
-              {plan.plan?.map((meal, i) => {
-                const c = MEAL_COLORS[meal.meal] || { bg:'#f0fdf4', dot:'#059669' }
+              {plan.suggestions.map((meal,i)=>{
+                const c=MEAL_COLORS[plan.mealTime]||{bg:'#f0fdf4',dot:'#059669'}
                 return (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity:0, x:-12 }}
-                    animate={{ opacity:1, x:0 }}
-                    transition={{ delay: i * 0.08 }}
+                  <motion.div key={i} initial={{opacity:0,x:-12}} animate={{opacity:1,x:0}} transition={{delay:i*0.08}}
                     className="flex gap-3 p-3 rounded-xl border border-gray-100"
-                    style={{ background: c.bg + '60' }}
-                  >
-                    <div className="flex flex-col items-center gap-1 flex-shrink-0 pt-0.5">
-                      <div className="w-3 h-3 rounded-full" style={{ background: c.dot }} />
-                      {i < plan.plan.length - 1 && <div className="w-0.5 flex-1 bg-gray-200 rounded-full min-h-[16px]" />}
+                    style={{background:c.bg+'60'}}>
+                    <div className="flex flex-col items-center gap-1 flex-shrink-0 pt-1">
+                      <div className="w-3 h-3 rounded-full" style={{background:c.dot}}/>
+                      {i<plan.suggestions.length-1&&<div className="w-0.5 flex-1 bg-gray-200 rounded-full min-h-[16px]"/>}
                     </div>
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="font-head font-bold text-xs text-gray-700">{meal.meal}</span>
-                        <span className="font-mono-num text-xs font-semibold text-em-dark">{meal.totalKcal} kcal</span>
+                        <span className="font-head font-bold text-xs text-gray-700">{meal.emoji} {meal.name}</span>
+                        <span className="font-mono-num text-xs font-semibold text-em-dark">{meal.kcal} kcal</span>
                       </div>
-                      <div className="flex flex-wrap gap-1.5 mb-1">
-                        {meal.items?.map((item, j) => (
-                          <span key={j} className="text-[11px] bg-white rounded-lg px-2 py-1 border border-gray-100 text-gray-600 font-medium shadow-sm">
-                            {item.emoji} {item.name}
-                          </span>
-                        ))}
-                      </div>
-                      <p className="text-[10px] text-gray-400 italic">{meal.whyThisMeal}</p>
+                      <p className="text-[10px] text-gray-500 italic">{meal.reason}</p>
+                      {meal.protein>0&&<span className="text-[10px] bg-yellow-50 text-yellow-700 px-2 py-0.5 rounded-full mt-1 inline-block border border-yellow-100">{meal.protein}g protein</span>}
                     </div>
                   </motion.div>
                 )
               })}
             </div>
 
-            <div className="flex items-center justify-between p-3 bg-em-xl rounded-xl border border-em/10 mb-2">
-              <span className="font-head font-semibold text-em-dark text-xs">Total planned</span>
-              <span className="font-mono-num font-bold text-em-dark">{plan.totalKcal} kcal</span>
-            </div>
-
-            {plan.tip && (
-              <p className="text-[11px] text-gray-500 italic text-center leading-relaxed">💡 {plan.tip}</p>
+            {plan.localFavorite&&(
+              <div className="bg-teal-light rounded-xl p-3 border border-teal/15 mb-2">
+                <p className="text-[10px] font-bold text-teal-dark mb-0.5 font-head">📍 LOCAL FAVOURITE · JAMSHEDPUR</p>
+                <p className="text-xs text-teal-dark">{plan.localFavorite} — a delicious local option for variety!</p>
+              </div>
             )}
+            <p className="text-[11px] text-gray-500 italic text-center">💡 {plan.tip}</p>
           </motion.div>
         )}
       </AnimatePresence>
